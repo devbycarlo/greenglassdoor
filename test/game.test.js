@@ -146,6 +146,17 @@ test('CDN scripts are pinned; CORS-enabled Vue uses SRI', () => {
   assert.doesNotMatch(html, /cdn\.tailwindcss\.com"/);
 });
 
+test('rapid actions get unique IDs (no same-millisecond key collisions)', () => {
+  const { state } = boot();
+  state.inputDestination.value = 'Beach';
+  for (let i = 0; i < 25; i++) {
+    state.inputItem.value = `Item ${i}`;
+    state.submitSoloAttempt();
+  }
+  const ids = state.soloHistory.value.map(entry => entry.id);
+  assert.equal(new Set(ids).size, ids.length, 'every history row has a distinct key');
+});
+
 test('docs and package metadata match the tooling', () => {
   const readme = fs.readFileSync(path.join(ROOT, 'README.md'), 'utf8');
   assert.doesNotMatch(readme, /Local Firebase CLI dependency/);

@@ -30,7 +30,7 @@ A robot bouncer picks a secret rule and judges everything you bring.
 - Watch your **🔥 streak** grow with each correct guess
 - Ask for **two progressive hints** when you're stuck — each hint costs 1 🔥 streak point
 - Pick from 10 rule names in the "Crack the Secret Rule" panel — or surrender and reveal the answer
-- Fresh rule + destination on every new game
+- New rule and destination every game (the rule may repeat)
 - Hears a spoken verdict on every item: "Yes you can bring that" or "Sorr you cannot bring that" (respects the 🔊 toggle)
 
 ### 🎉 Party Host — "Pass & Play"
@@ -71,7 +71,7 @@ python -m http.server 8765
 # then open http://localhost:8765
 ```
 
-Heads-up: the page loads pinned Vue 3 and Tailwind scripts from CDNs (with SRI integrity checks), so it needs an internet connection the first time. Run the network-free tests with `npm test`.
+Heads-up: the page loads version-pinned Vue 3 and Tailwind scripts from CDNs, so it needs an internet connection the first time. Vue is integrity-checked (SRI); the Tailwind Play CDN sends no CORS header, so SRI is impossible there. Run the network-free tests with `npm test`.
 
 ---
 

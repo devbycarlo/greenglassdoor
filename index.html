@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Green Glass Door / Going on a Picnic - Secret Rule Party Game</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%9A%AA%3C/text%3E%3C/svg%3E">
-    <!-- Tailwind CSS (version-pinned + SRI) -->
-    <!-- Tailwind Play CDN sends no CORS header, so SRI cannot be used here; version is pinned -->
+    <!-- Tailwind CSS: version-pinned; SRI unavailable because the CDN sends no CORS header -->
     <script src="https://cdn.tailwindcss.com/3.4.17"></script>
     <!-- Vue 3 (production build, version-pinned + SRI) -->
     <script src="https://unpkg.com/vue@3.5.46/dist/vue.global.prod.js" integrity="sha384-yecw277Z8jRxFMq9QvJlrTKbJ6Mcsm0nsMCf2mi3CfQq3a/i6NGzlaiHHcp7RDir" crossorigin="anonymous"></script>
@@ -790,6 +789,11 @@
                 const mode = ref('solo');
                 const muted = ref(false);
 
+                // Unique IDs even when two actions land in the same millisecond
+                const uid = () => (globalThis.crypto && typeof globalThis.crypto.randomUUID === 'function')
+                    ? globalThis.crypto.randomUUID()
+                    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
                 // Modals
                 const showRulesModal = ref(false);
                 const showGuessModal = ref(false);
@@ -1033,7 +1037,7 @@
 
                     // Automatically add starter example to approved history
                     soloHistory.value.push({
-                        id: Date.now(),
+                        id: uid(),
                         destination: starter.destination,
                         item: starter.item,
                         approved: true
@@ -1053,7 +1057,7 @@
                     const isPassed = currentSoloRule.value.check(item, dest);
 
                     soloHistory.value.unshift({
-                        id: Date.now(),
+                        id: uid(),
                         destination: dest,
                         item: item,
                         approved: isPassed
@@ -1156,7 +1160,7 @@
 
                 const saveCustomRule = () => {
                     currentHostRule.value = {
-                        id: 'custom_' + Date.now(),
+                        id: 'custom_' + uid(),
                         name: customRuleName.value,
                         category: 'Custom',
                         description: customRuleDesc.value,
@@ -1172,7 +1176,7 @@
                 const addPlayer = () => {
                     if (!newPlayerName.value.trim()) return;
                     partyPlayers.value.push({
-                        id: Date.now(),
+                        id: uid(),
                         name: newPlayerName.value.trim(),
                         solved: false,
                         approved: 0,
@@ -1209,7 +1213,7 @@
                     }
 
                     partyFeed.value.unshift({
-                        id: Date.now(),
+                        id: uid(),
                         playerName: pName,
                         destination: hostInputDestination.value || 'Picnic',
                         item: hostInputItem.value,
