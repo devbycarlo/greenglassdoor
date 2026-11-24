@@ -1,0 +1,31 @@
+{
+  "hosting": {
+    "public": ".",
+    "site": "greenglass",
+    "ignore": [
+      "firebase.json",
+      "README.md",
+      "**/.*",
+      "**/node_modules/**",
+      "node_modules",
+      "package.json",
+      "package-lock.json",
+      "test/**",
+      "**/*.log",
+      "**/*.tmp",
+      "**/*.swp",
+      "**/*~",
+      "**/.DS_Store",
+      "**/Thumbs.db",
+      "**/*.pyc",
+      "**/__pycache__/**",
+      "**/.venv/**",
+      "**/venv/**",
+      "**/dist/**",
+      "**/build/**"
+    ],
+    "rewrites": [
+      { "source": "**", "destination": "/index.html" }
+    ]
+  }
+}

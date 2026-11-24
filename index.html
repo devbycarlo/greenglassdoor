@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Green Glass Door / Going on a Picnic - Secret Rule Party Game</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%9A%AA%3C/text%3E%3C/svg%3E">
+    <!-- Tailwind CSS (version-pinned + SRI) -->
+    <!-- Tailwind Play CDN sends no CORS header, so SRI cannot be used here; version is pinned -->
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <!-- Vue 3 (production build, version-pinned + SRI) -->
+    <script src="https://unpkg.com/vue@3.5.46/dist/vue.global.prod.js" integrity="sha384-yecw277Z8jRxFMq9QvJlrTKbJ6Mcsm0nsMCf2mi3CfQq3a/i6NGzlaiHHcp7RDir" crossorigin="anonymous"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        dark: {
+                            900: '#0B0D10',
+                            800: '#13171F',
+                            700: '#1C2330',
+                            600: '#2A3446',
+                        },
+                        emerald: {
+                            glow: '#10B981',
+                        },
+                        coral: {
+                            glow: '#F43F5E',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: #0B0D10;
+            color: #F3F4F6;
+            font-family: 'Inter', sans-serif;
+        }
+
+        [v-cloak] { display: none; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0B0D10;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1C2330;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #2A3446;
+        }
+
+        /* Micro-Animations & Glow Effects */
+        .glow-approved {
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.25);
+            border-color: rgba(16, 185, 129, 0.5);
+        }
+        
+        .glow-rejected {
+            box-shadow: 0 0 20px rgba(244, 63, 94, 0.25);
+            border-color: rgba(244, 63, 94, 0.5);
+        }
+
+        .animate-bounce-short {
+            animation: bounceShort 0.4s ease;
+        }
+
+        .animate-shake {
+            animation: shake 0.4s ease-in-out;
+        }
+
+        @keyframes bounceShort {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+
+        .glass-panel {
+            background: rgba(19, 23, 31, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        .peek-blur {
+            filter: blur(10px);
+            user-select: none;
+            transition: filter 0.3s ease;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-emerald-500 selection:text-black">
+
+    <div id="app" class="flex-1 flex flex-col max-w-6xl w-full mx-auto p-3 sm:p-6" v-cloak>
+        
+        <!-- HEADER / NAVIGATION -->
+        <header class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6 pb-4 border-b border-gray-800">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center text-black font-extrabold text-xl shadow-lg shadow-emerald-950">
+                    🚪
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-black tracking-tight bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent">
+                        GREEN GLASS DOOR
+                    </h1>
+                    <p class="text-xs font-mono text-gray-400">GOING ON A PICNIC · THE SECRET RULE DEDUCTION GAME</p>
+                </div>
+            </div>
+
+            <!-- MODE SWITCHER & AUDIO / HELP TOGGLES -->
+            <div class="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-between sm:justify-end">
+                <div class="bg-dark-800 p-1 rounded-xl border border-gray-800 flex gap-1">
+                    <button 
+                        @click="setMode('solo')" 
+                        :class="mode === 'solo' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' : 'text-gray-400 hover:text-white border-transparent'"
+                        class="px-3 py-1.5 rounded-lg text-xs font-semibold transition border flex items-center gap-1.5">
+                        <span>🤖</span> Solo vs AI
+                    </button>
+                    <button 
+                        @click="setMode('host')" 
+                        :class="mode === 'host' ? 'bg-purple-500/20 text-purple-400 border-purple-500/40' : 'text-gray-400 hover:text-white border-transparent'"
+                        class="px-3 py-1.5 rounded-lg text-xs font-semibold transition border flex items-center gap-1.5">
+                        <span>🎉</span> Party Host
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-1.5">
+                    <button 
+                        @click="toggleMute" 
+                        class="p-2 rounded-xl bg-dark-800 hover:bg-dark-700 text-gray-400 hover:text-white border border-gray-800 transition"
+                        :title="muted ? 'Unmute Sound' : 'Mute Sound'">
+                        <span v-if="!muted">🔊</span>
+                        <span v-else>🔇</span>
+                    </button>
+                    <button 
+                        @click="showRulesModal = true" 
+                        class="px-3 py-2 rounded-xl bg-dark-800 hover:bg-dark-700 text-gray-300 hover:text-white border border-gray-800 text-xs font-mono font-medium transition flex items-center gap-1">
+                        <span>❓</span> Rules
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- ========================================================= -->
+        <!-- MODE 1: SOLO VS AI BOUNCER -->
+        <!-- ========================================================= -->
+        <main v-if="mode === 'solo'" class="flex-1 flex flex-col gap-6">
+            
+            <!-- CURRENT LOCATION & BOUNCER BANNER -->
+            <div class="glass-panel rounded-2xl p-4 sm:p-6 relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                
+                <div class="space-y-1 z-10">
+                    <div class="flex items-center gap-2">
+                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                            Current Destination
+                        </span>
+                        <span class="text-xs text-gray-500 font-mono">Rule Category: {{ currentSoloRule.category }}</span>
+                    </div>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white flex items-center gap-2">
+                        <span>📍</span> {{ soloDestination }}
+                    </h2>
+                    <p class="text-xs sm:text-sm text-gray-400">
+                        The AI Bouncer has established a secret entry rule. Test items or change destinations to crack the code!
+                    </p>
+                </div>
+
+                <!-- STATS TRACKER -->
+                <div class="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end z-10 bg-dark-900/60 p-3 rounded-xl border border-gray-800/80">
+                    <div class="text-center px-2">
+                        <div class="text-xs font-mono text-gray-500">ATTEMPTS</div>
+                        <div class="text-lg font-bold font-mono text-white">{{ soloHistory.length }}</div>
+                    </div>
+                    <div class="h-8 w-px bg-gray-800"></div>
+                    <div class="text-center px-2">
+                        <div class="text-xs font-mono text-emerald-500">PASSED</div>
+                        <div class="text-lg font-bold font-mono text-emerald-400">{{ approvedCount }}</div>
+                    </div>
+                    <div class="h-8 w-px bg-gray-800"></div>
+                    <div class="text-center px-2">
+                        <div class="text-xs font-mono text-coral-glow">REJECTED</div>
+                        <div class="text-lg font-bold font-mono text-rose-400">{{ rejectedCount }}</div>
+                    </div>
+                    <div class="h-8 w-px bg-gray-800"></div>
+                    <div class="text-center px-2">
+                        <div class="text-xs font-mono text-yellow-500">STREAK</div>
+                        <div class="text-lg font-bold font-mono text-yellow-400">🔥 {{ currentStreak }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- INPUT CONSOLE & CONTROLS -->
+            <div class="glass-panel rounded-2xl p-4 sm:p-6 space-y-4">
+                <form @submit.prevent="submitSoloAttempt" class="space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                        
+                        <!-- DESTINATION INPUT -->
+                        <div class="sm:col-span-5 space-y-1">
+                            <label class="block text-xs font-mono uppercase tracking-wider text-gray-400">
+                                Destination / Place
+                            </label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">📍</span>
+                                <input 
+                                    v-model="inputDestination" 
+                                    type="text" 
+                                    placeholder="e.g. Beach, Paris, Moon"
+                                    required
+                                    class="w-full bg-dark-900 border border-gray-700/80 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl py-2.5 pl-9 pr-3 text-sm text-white placeholder-gray-600 outline-none transition font-medium">
+                            </div>
+                        </div>
+
+                        <!-- ITEM INPUT -->
+                        <div class="sm:col-span-5 space-y-1">
+                            <label class="block text-xs font-mono uppercase tracking-wider text-gray-400">
+                                Item to Bring
+                            </label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">🧳</span>
+                                <input 
+                                    v-model="inputItem" 
+                                    type="text" 
+                                    placeholder="e.g. Apples, Sunglasses, Book"
+                                    required
+                                    ref="itemInputRef"
+                                    class="w-full bg-dark-900 border border-gray-700/80 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl py-2.5 pl-9 pr-3 text-sm text-white placeholder-gray-600 outline-none transition font-medium">
+                            </div>
+                        </div>
+
+                        <!-- SUBMIT BUTTON -->
+                        <div class="sm:col-span-2 flex items-end">
+                            <button 
+                                type="submit" 
+                                :disabled="!inputItem.trim() || !inputDestination.trim()"
+                                class="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 disabled:opacity-40 disabled:hover:from-emerald-500 text-black font-bold py-2.5 px-4 rounded-xl shadow-lg shadow-emerald-950 transition flex items-center justify-center gap-1.5 text-sm">
+                                <span>TEST GATE</span>
+                                <span>➔</span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- DEDUCTION TOOLS BAR -->
+                <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-gray-800/80">
+                    <div class="flex items-center gap-2">
+                        <button 
+                            @click="requestHint" 
+                            :disabled="hintsGiven >= 2"
+                            class="px-3 py-1.5 rounded-lg bg-dark-800 hover:bg-dark-700 text-amber-400 border border-amber-500/20 text-xs font-medium transition flex items-center gap-1 disabled:opacity-40">
+                            <span>💡</span> {{ hintButtonText }}
+                        </button>
+                        
+                        <button 
+                            @click="showGuessModal = true" 
+                            class="px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold transition flex items-center gap-1">
+                            <span>🎯</span> Solve / Guess Rule
+                        </button>
+                        <span class="text-[10px] text-amber-500/70 hidden sm:inline">−1 streak per hint</span>
+                    </div>
+
+                    <button 
+                        @click="newSoloGame" 
+                        class="px-3 py-1.5 rounded-lg bg-dark-800 hover:bg-dark-700 text-gray-400 hover:text-white border border-gray-800 text-xs font-mono transition flex items-center gap-1">
+                        <span>🔄</span> New Secret Rule
+                    </button>
+                </div>
+
+                <!-- HINT DISPLAY BOX -->
+                <div v-if="activeHints.length > 0" class="space-y-1.5 pt-2">
+                    <div v-for="(hint, index) in activeHints" :key="index" class="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-200 flex items-start gap-2">
+                        <span class="text-amber-400 font-bold">HINT {{ index + 1 }}:</span>
+                        <span>{{ hint }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LOG MANIFEST (SPLIT COLUMNS / FEED) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1">
+                
+                <!-- APPROVED MANIFEST -->
+                <div class="glass-panel rounded-2xl p-4 sm:p-5 flex flex-col h-[380px]">
+                    <div class="flex items-center justify-between mb-3 pb-2 border-b border-gray-800">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <h3 class="text-xs font-mono font-bold uppercase tracking-wider text-emerald-400">
+                                Approved Manifest (In the Club)
+                            </h3>
+                        </div>
+                        <span class="text-xs font-mono text-gray-500">{{ approvedList.length }} items</span>
+                    </div>
+
+                    <div class="flex-1 overflow-y-auto space-y-2 pr-1">
+                        <div v-if="approvedList.length === 0" class="h-full flex flex-col items-center justify-center text-gray-600 text-xs italic space-y-1">
+                            <span>No items approved yet</span>
+                            <span>Try testing different items & places!</span>
+                        </div>
+                        <div 
+                            v-for="entry in approvedList" 
+                            :key="entry.id"
+                            class="p-3 rounded-xl bg-emerald-950/20 border border-emerald-500/30 flex items-center justify-between text-xs transition animate-bounce-short">
+                            <div class="flex items-center gap-2 overflow-hidden">
+                                <span class="text-emerald-400 text-sm">✓</span>
+                                <div>
+                                    <span class="text-white font-semibold">{{ entry.item }}</span>
+                                    <span class="text-gray-400 text-[11px] block">to {{ entry.destination }}</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-mono text-emerald-500/70 bg-emerald-500/10 px-2 py-0.5 rounded">
+                                PASSED
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- REJECTED AT THE GATE -->
+                <div class="glass-panel rounded-2xl p-4 sm:p-5 flex flex-col h-[380px]">
+                    <div class="flex items-center justify-between mb-3 pb-2 border-b border-gray-800">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                            <h3 class="text-xs font-mono font-bold uppercase tracking-wider text-rose-400">
+                                Rejected at the Gate
+                            </h3>
+                        </div>
+                        <span class="text-xs font-mono text-gray-500">{{ rejectedList.length }} items</span>
+                    </div>
+
+                    <div class="flex-1 overflow-y-auto space-y-2 pr-1">
+                        <div v-if="rejectedList.length === 0" class="h-full flex flex-col items-center justify-center text-gray-600 text-xs italic space-y-1">
+                            <span>No items rejected yet</span>
+                            <span>Rejections provide vital clues!</span>
+                        </div>
+                        <div 
+                            v-for="entry in rejectedList" 
+                            :key="entry.id"
+                            class="p-3 rounded-xl bg-rose-950/20 border border-rose-500/30 flex items-center justify-between text-xs transition animate-shake">
+                            <div class="flex items-center gap-2 overflow-hidden">
+                                <span class="text-rose-400 text-sm">✗</span>
+                                <div>
+                                    <span class="text-gray-300 font-semibold line-through decoration-rose-500/50">{{ entry.item }}</span>
+                                    <span class="text-gray-500 text-[11px] block">to {{ entry.destination }}</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-mono text-rose-500/70 bg-rose-500/10 px-2 py-0.5 rounded">
+                                DENIED
+                            </span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </main>
+
+        <!-- ========================================================= -->
+        <!-- MODE 2: PARTY HOST / PASS & PLAY MODE -->
+        <!-- ========================================================= -->
+        <main v-if="mode === 'host'" class="flex-1 flex flex-col gap-6">
+            
+            <!-- HOST SECRET RULE GENERATOR CARD (PEEK PROTECTED) -->
+            <div class="glass-panel rounded-2xl p-4 sm:p-6 space-y-4 border-purple-500/30 relative">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-3 border-b border-gray-800">
+                    <div class="flex items-center gap-2">
+                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                            Game Master Console
+                        </span>
+                        <span class="text-xs text-gray-400">Keep screen away from players!</span>
+                    </div>
+
+                    <!-- DIFFICULTY SELECTOR -->
+                    <div class="flex items-center gap-1.5 bg-dark-900 p-1 rounded-xl border border-gray-800">
+                        <button 
+                            v-for="diff in ['Easy', 'Medium', 'Mind-Bender']" 
+                            :key="diff"
+                            @click="hostDifficulty = diff; generateHostRule()"
+                            :class="hostDifficulty === diff ? 'bg-purple-600 text-white font-bold' : 'text-gray-400 hover:text-white'"
+                            class="px-2.5 py-1 rounded-lg text-[11px] font-mono transition">
+                            {{ diff }}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- SECRET RULE CARD WITH TAP TO REVEAL -->
+                <div class="relative bg-dark-900 rounded-xl p-4 border border-purple-500/20 overflow-hidden">
+                    <div :class="{ 'peek-blur': !hostRuleRevealed }" class="space-y-2 transition-all duration-300">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-mono text-purple-400 font-bold uppercase">Secret Rule: {{ currentHostRule.name }}</span>
+                            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20">
+                                {{ currentHostRule.category }}
+                            </span>
+                        </div>
+                        <p class="text-base sm:text-lg font-bold text-white">
+                            "{{ currentHostRule.description }}"
+                        </p>
+                        <div class="text-xs text-gray-400 font-mono bg-dark-800 p-2 rounded border border-gray-800">
+                            💡 Starter Example: We're going to <span class="text-emerald-400 font-bold">{{ currentHostRule.examples[0].destination }}</span> and bringing <span class="text-emerald-400 font-bold">{{ currentHostRule.examples[0].item }}</span>
+                        </div>
+                    </div>
+
+                    <!-- REVEAL OVERLAY -->
+                    <div 
+                        v-if="!hostRuleRevealed" 
+                        @click="hostRuleRevealed = true"
+                        class="absolute inset-0 bg-dark-900/90 backdrop-blur-md flex flex-col items-center justify-center cursor-pointer group transition">
+                        <span class="text-2xl mb-1 group-hover:scale-110 transition-transform">👁️</span>
+                        <span class="text-xs font-bold text-purple-300 font-mono uppercase tracking-wider">Tap to Secretly Peek Rule</span>
+                        <span class="text-[10px] text-gray-500">Hide from other players</span>
+                    </div>
+                </div>
+
+                <!-- HOST CONTROLS -->
+                <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
+                    <div class="flex items-center gap-2">
+                        <button 
+                            @click="hostRuleRevealed = !hostRuleRevealed"
+                            class="px-3 py-1.5 rounded-lg bg-dark-800 hover:bg-dark-700 text-purple-300 border border-purple-500/30 text-xs font-medium transition flex items-center gap-1">
+                            <span>👁️</span> {{ hostRuleRevealed ? 'Hide Secret Rule' : 'Peek Secret Rule' }}
+                        </button>
+                        <button 
+                            @click="generateHostRule" 
+                            class="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs transition flex items-center gap-1 shadow-lg shadow-purple-950">
+                            <span>🎲</span> Generate New Rule
+                        </button>
+                    </div>
+
+                    <button 
+                        @click="showCustomRuleModal = true" 
+                        class="px-3 py-1.5 rounded-lg bg-dark-800 hover:bg-dark-700 text-gray-300 border border-gray-800 text-xs font-mono transition">
+                        ✏️ Create Custom Rule
+                    </button>
+                </div>
+            </div>
+
+            <!-- ROSTER & BOUNCER DECISION LOG PANE -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                <!-- PARTY ROSTER (5 COLS) -->
+                <div class="lg:col-span-5 glass-panel rounded-2xl p-4 sm:p-5 flex flex-col space-y-4">
+                    <div class="flex items-center justify-between pb-2 border-b border-gray-800">
+                        <h3 class="text-xs font-mono font-bold uppercase tracking-wider text-purple-400 flex items-center gap-1.5">
+                            <span>👥</span> Player Roster ({{ partyPlayers.length }})
+                        </h3>
+                    </div>
+
+                    <!-- ADD PLAYER FORM -->
+                    <form @submit.prevent="addPlayer" class="flex gap-2">
+                        <input 
+                            v-model="newPlayerName" 
+                            type="text" 
+                            placeholder="Player name (e.g. Alex)"
+                            class="flex-1 bg-dark-900 border border-gray-800 rounded-xl px-3 py-2 text-xs text-white placeholder-gray-600 outline-none focus:border-purple-500">
+                        <button 
+                            type="submit" 
+                            :disabled="!newPlayerName.trim()"
+                            class="bg-purple-600 hover:bg-purple-500 disabled:opacity-40 text-white font-bold px-3 py-2 rounded-xl text-xs transition">
+                            + Add
+                        </button>
+                    </form>
+
+                    <!-- PLAYERS LIST -->
+                    <div class="space-y-2 flex-1 overflow-y-auto max-h-[300px] pr-1">
+                        <div v-if="partyPlayers.length === 0" class="text-center py-6 text-gray-600 text-xs italic">
+                            Add players to track who cracks the code!
+                        </div>
+
+                        <div 
+                            v-for="(player, idx) in partyPlayers" 
+                            :key="player.id"
+                            :class="player.solved ? 'bg-emerald-950/30 border-emerald-500/40' : 'bg-dark-900 border-gray-800'"
+                            class="p-3 rounded-xl border flex items-center justify-between transition">
+                            <div class="flex items-center gap-2.5">
+                                <button 
+                                    @click="togglePlayerSolved(idx)"
+                                    :class="player.solved ? 'bg-emerald-500 text-black' : 'bg-dark-800 text-gray-600 hover:text-gray-400 border border-gray-700'"
+                                    class="w-6 h-6 rounded-lg text-xs font-bold flex items-center justify-center transition"
+                                    :title="player.solved ? 'Mark as searching' : 'Mark as solved'">
+                                    ✓
+                                </button>
+                                <div>
+                                    <div class="text-xs font-bold text-white flex items-center gap-1.5">
+                                        <span>{{ player.name }}</span>
+                                        <span v-if="player.solved" class="text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.2 rounded font-mono">CRACKED CODE 🎉</span>
+                                    </div>
+                                    <div class="text-[10px] text-gray-500 font-mono">
+                                        Approved: {{ player.approved }} | Denied: {{ player.denied }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button 
+                                @click="removePlayer(idx)" 
+                                class="text-gray-600 hover:text-rose-400 text-xs px-1.5 py-1">
+                                ✕
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- QUICK BOUNCER ENTRY & GAME FEED (7 COLS) -->
+                <div class="lg:col-span-7 glass-panel rounded-2xl p-4 sm:p-5 flex flex-col space-y-4">
+                    <div class="flex items-center justify-between pb-2 border-b border-gray-800">
+                        <h3 class="text-xs font-mono font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                            <span>⚖️</span> Host Decision Pad
+                        </h3>
+                        <span class="text-xs text-gray-500 font-mono">Log Guesses Live</span>
+                    </div>
+
+                    <!-- QUICK GUESS FORM FOR HOST -->
+                    <div class="bg-dark-900 p-3 rounded-xl border border-gray-800 space-y-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            <!-- PLAYER SELECTOR -->
+                            <div>
+                                <label class="block text-[10px] font-mono uppercase text-gray-400 mb-1">Player</label>
+                                <select 
+                                    v-model="hostInputPlayerId" 
+                                    class="w-full bg-dark-800 border border-gray-700 rounded-lg p-2 text-xs text-white outline-none focus:border-purple-500">
+                                    <option value="" disabled>Select Player...</option>
+                                    <option v-for="p in partyPlayers" :key="p.id" :value="p.id">{{ p.name }}</option>
+                                </select>
+                            </div>
+
+                            <!-- DESTINATION -->
+                            <div>
+                                <label class="block text-[10px] font-mono uppercase text-gray-400 mb-1">Destination</label>
+                                <input 
+                                    v-model="hostInputDestination" 
+                                    type="text" 
+                                    placeholder="Destination"
+                                    class="w-full bg-dark-800 border border-gray-700 rounded-lg p-2 text-xs text-white outline-none focus:border-purple-500">
+                            </div>
+
+                            <!-- ITEM -->
+                            <div>
+                                <label class="block text-[10px] font-mono uppercase text-gray-400 mb-1">Item Brought</label>
+                                <input 
+                                    v-model="hostInputItem" 
+                                    type="text" 
+                                    placeholder="Item name"
+                                    class="w-full bg-dark-800 border border-gray-700 rounded-lg p-2 text-xs text-white outline-none focus:border-purple-500">
+                            </div>
+                        </div>
+
+                        <!-- AUTO EVALUATE OR MANUAL OVERRIDE BUTTONS -->
+                        <div class="flex items-center gap-2 pt-1">
+                            <button 
+                                @click="hostAutoEvaluate"
+                                :disabled="!hostInputItem.trim() || !hostInputDestination.trim() || !currentHostRule.check"
+                                class="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-40 text-white font-bold py-2 rounded-lg text-xs transition">
+                                ⚡ Auto-Evaluate & Log
+                            </button>
+                            <button 
+                                @click="hostManualDecision(true)"
+                                :disabled="!hostInputItem.trim()"
+                                class="bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-400 border border-emerald-500/40 font-bold px-3 py-2 rounded-lg text-xs transition">
+                                ALLOW ✓
+                            </button>
+                            <button 
+                                @click="hostManualDecision(false)"
+                                :disabled="!hostInputItem.trim()"
+                                class="bg-rose-600/30 hover:bg-rose-600/50 text-rose-400 border border-rose-500/40 font-bold px-3 py-2 rounded-lg text-xs transition">
+                                DENY ✗
+                            </button>
+                        </div>
+                        <p v-if="!currentHostRule.check" class="pt-1 text-[11px] text-amber-400/80">Custom rules are host-judged — use ALLOW / DENY.</p>
+                    </div>
+
+                    <!-- PARTY LIVE FEED -->
+                    <div class="flex-1 flex flex-col">
+                        <div class="text-[11px] font-mono text-gray-400 uppercase tracking-wider mb-2">Group Log Feed</div>
+                        <div class="flex-1 overflow-y-auto space-y-2 max-h-[220px] pr-1">
+                            <div v-if="partyFeed.length === 0" class="text-center py-8 text-gray-600 text-xs italic">
+                                Decisions logged by the host will appear here in real-time.
+                            </div>
+                            <div 
+                                v-for="log in partyFeed" 
+                                :key="log.id"
+                                :class="log.allowed ? 'bg-emerald-950/20 border-emerald-500/30' : 'bg-rose-950/20 border-rose-500/30'"
+                                class="p-2.5 rounded-xl border flex items-center justify-between text-xs">
+                                <div class="flex items-center gap-2">
+                                    <span :class="log.allowed ? 'text-emerald-400' : 'text-rose-400'" class="font-bold">
+                                        {{ log.allowed ? '✓ ALLOWED' : '✗ DENIED' }}
+                                    </span>
+                                    <span class="font-bold text-white">{{ log.playerName }}</span>
+                                    <span class="text-gray-400">brings <strong class="text-gray-200">{{ log.item }}</strong> to {{ log.destination }}</span>
+                                </div>
+                                <span class="text-[10px] font-mono text-gray-500">{{ log.time }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </main>
+
+        <!-- ========================================================= -->
+        <!-- MODALS -->
+        <!-- ========================================================= -->
+
+        <!-- HOW TO PLAY MODAL -->
+        <div v-if="showRulesModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="glass-panel max-w-lg w-full rounded-2xl p-6 space-y-4 border-gray-700 max-h-[90vh] overflow-y-auto">
+                <div class="flex items-center justify-between pb-3 border-b border-gray-800">
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                        <span>📖</span> How to Play Green Glass Door
+                    </h3>
+                    <button @click="showRulesModal = false" class="text-gray-400 hover:text-white text-lg">✕</button>
+                </div>
+
+                <div class="space-y-3 text-xs sm:text-sm text-gray-300 leading-relaxed">
+                    <p>
+                        <strong>Green Glass Door</strong> is a classic deduction game where an exclusive club only accepts items (and places) that satisfy a <strong>secret rule</strong>.
+                    </p>
+
+                    <div class="bg-dark-900 p-3 rounded-xl border border-gray-800 space-y-2">
+                        <div class="font-bold text-emerald-400 font-mono uppercase text-xs">Example Gameplay</div>
+                        <p class="text-xs">
+                            • Secret Rule: <em>Item must contain double letters (e.g. A<strong>pp</strong>le, G<strong>la</strong>ss).</em><br>
+                            • Player 1: "I'm going to the beach and bringing <strong>Apples</strong>." -> <span class="text-emerald-400 font-bold">APPROVED!</span><br>
+                            • Player 2: "I'm going to the beach and bringing <strong>Bananas</strong>." -> <span class="text-rose-400 font-bold">REJECTED!</span>
+                        </p>
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <div class="font-bold text-white text-xs font-mono uppercase">Game Modes</div>
+                        <ul class="list-disc list-inside space-y-1 text-xs text-gray-400">
+                            <li><strong>Solo vs AI:</strong> The automated Bouncer picks a rule. Test items, request hints, and solve the rule code!</li>
+                            <li><strong>Party Host Mode:</strong> Pass the device around or host a live group! Use the secret rule generator, track players, and log decisions live.</li>
+                        </ul>
+                    </div>
+
+                    <div class="p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl text-xs text-purple-300">
+                        <strong>Golden Party Rule:</strong> If you figure out the rule, don't spoil it! Keep making correct guesses or help host until everyone cracks it!
+                    </div>
+                </div>
+
+                <button 
+                    @click="showRulesModal = false"
+                    class="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-bold py-2.5 rounded-xl text-xs transition">
+                    Got It, Let's Play!
+                </button>
+            </div>
+        </div>
+
+        <!-- SOLVE / GUESS RULE MODAL (SOLO MODE) -->
+        <div v-if="showGuessModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="glass-panel max-w-md w-full rounded-2xl p-6 space-y-4 border-emerald-500/40">
+                <div class="flex items-center justify-between pb-2 border-b border-gray-800">
+                    <h3 class="text-base font-bold text-white flex items-center gap-2">
+                        <span>🎯</span> Crack the Secret Rule
+                    </h3>
+                    <button @click="showGuessModal = false" class="text-gray-400 hover:text-white text-lg">✕</button>
+                </div>
+
+                <p class="text-xs text-gray-400">
+                    Think you've deduced the rule? Select your guess or surrender to reveal the answer!
+                </p>
+
+                <!-- RULE OPTIONS -->
+                <div class="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                    <button 
+                        v-for="ruleOpt in ruleGuessOptions" 
+                        :key="ruleOpt.id"
+                        @click="checkRuleGuess(ruleOpt.id)"
+                        class="w-full p-3 rounded-xl bg-dark-900 hover:bg-emerald-950/40 border border-gray-800 hover:border-emerald-500/50 text-left text-xs font-medium text-gray-200 transition flex items-center justify-between">
+                        <span>{{ ruleOpt.name }}</span>
+                        <span class="text-emerald-400 font-mono text-[10px]">Select ➔</span>
+                    </button>
+                </div>
+
+                <!-- SURRENDER / REVEAL BUTTON -->
+                <div class="pt-2 border-t border-gray-800 flex justify-between items-center">
+                    <button 
+                        @click="surrenderAndReveal" 
+                        class="text-xs text-rose-400 hover:text-rose-300 font-mono transition">
+                        🏳️ Surrender & Reveal Rule
+                    </button>
+                    <button 
+                        @click="showGuessModal = false" 
+                        class="px-3 py-1.5 rounded-lg bg-dark-800 text-gray-300 text-xs">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- WIN / CONGRATS MODAL -->
+        <div v-if="showWinModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+            <div class="glass-panel max-w-md w-full rounded-2xl p-6 text-center space-y-4 border-emerald-500/60 shadow-2xl shadow-emerald-950">
+                <div class="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 mx-auto flex items-center justify-center text-3xl animate-bounce">
+                    🎉
+                </div>
+
+                <h3 class="text-2xl font-black text-white">CODE CRACKED!</h3>
+                <p class="text-xs text-gray-300">You successfully deduced the secret rule!</p>
+
+                <div class="bg-dark-900 p-4 rounded-xl border border-emerald-500/30 text-left space-y-1">
+                    <div class="text-[10px] font-mono text-emerald-400 uppercase font-bold">Secret Rule Identified:</div>
+                    <div class="text-sm font-bold text-white">{{ currentSoloRule.name }}</div>
+                    <div class="text-xs text-gray-400 pt-1 border-t border-gray-800/80 mt-2">
+                        "{{ currentSoloRule.description }}"
+                    </div>
+                </div>
+
+                <button 
+                    @click="showWinModal = false; newSoloGame()" 
+                    class="w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-extrabold py-3 rounded-xl text-sm shadow-lg shadow-emerald-950 transition">
+                    Play Next Secret Rule ➔
+                </button>
+            </div>
+        </div>
+
+        <!-- CUSTOM RULE CREATOR MODAL -->
+        <div v-if="showCustomRuleModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="glass-panel max-w-md w-full rounded-2xl p-6 space-y-4 border-purple-500/40">
+                <div class="flex items-center justify-between pb-2 border-b border-gray-800">
+                    <h3 class="text-base font-bold text-white flex items-center gap-2">
+                        <span>✏️</span> Create Custom Secret Rule
+                    </h3>
+                    <button @click="showCustomRuleModal = false" class="text-gray-400 hover:text-white text-lg">✕</button>
+                </div>
+
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-mono uppercase text-gray-400 mb-1">Rule Name</label>
+                        <input 
+                            v-model="customRuleName" 
+                            type="text" 
+                            placeholder="e.g. The 'Um' Rule"
+                            class="w-full bg-dark-900 border border-gray-700 rounded-xl p-2.5 text-xs text-white outline-none focus:border-purple-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-mono uppercase text-gray-400 mb-1">Rule Description (For Host)</label>
+                        <textarea 
+                            v-model="customRuleDesc" 
+                            rows="3"
+                            placeholder="e.g. Player must say 'Um' before naming the item, or item must end with letter E..."
+                            class="w-full bg-dark-900 border border-gray-700 rounded-xl p-2.5 text-xs text-white outline-none focus:border-purple-500"></textarea>
+                    </div>
+                </div>
+
+                <div class="flex gap-2 pt-2">
+                    <button 
+                        @click="saveCustomRule" 
+                        :disabled="!customRuleName.trim() || !customRuleDesc.trim()"
+                        class="flex-1 bg-purple-600 hover:bg-purple-500 disabled:opacity-40 text-white font-bold py-2.5 rounded-xl text-xs transition">
+                        Set Custom Rule
+                    </button>
+                    <button 
+                        @click="showCustomRuleModal = false" 
+                        class="px-4 py-2.5 bg-dark-800 text-gray-300 rounded-xl text-xs">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- VUE 3 APPLICATION SCRIPT -->
+    <script>
+        const { createApp, ref, computed, onMounted } = Vue;
+
+        createApp({
+            setup() {
+                // Game Mode: 'solo' | 'host'
+                const mode = ref('solo');
+                const muted = ref(false);
+
+                // Modals
+                const showRulesModal = ref(false);
+                const showGuessModal = ref(false);
+                const showWinModal = ref(false);
+                const showCustomRuleModal = ref(false);
+
+                // --- RICH CURATED PROGRAMMATIC RULE BANK ---
+                const RULE_BANK = [
+                    {
+                        id: 'double_letters',
+                        name: 'Double Letters',
+                        category: 'Easy',
+                        description: 'Items must contain consecutive repeated letters (e.g. Apple, Glass, Book, Moon).',
+                        hint1: 'Look closely at how the letters in allowed words are spelled.',
+                        hint2: 'Pairs of identical twin letters side-by-side.',
+                        check: (item, dest) => /(.)\1/i.test(item.replace(/\s+/g, '')),
+                        examples: [
+                            { destination: 'Moon', item: 'Apples' },
+                            { destination: 'Beach', item: 'Sunglasses' }
+                        ]
+                    },
+                    {
+                        id: 'starts_with_dest_letter',
+                        name: 'Matches Destination Start Letter',
+                        category: 'Easy',
+                        description: 'Items must start with the same first letter as the current Destination.',
+                        hint1: 'Pay attention to the first letter of the destination name!',
+                        hint2: 'Item and Destination must share the exact same starting letter.',
+                        check: (item, dest) => {
+                            const d = dest.trim().toLowerCase();
+                            const i = item.trim().toLowerCase();
+                            return d.length > 0 && i.length > 0 && d[0] === i[0];
+                        },
+                        examples: [
+                            { destination: 'Paris', item: 'Pizza' },
+                            { destination: 'London', item: 'Lemons' }
+                        ]
+                    },
+                    {
+                        id: 'dest_ends_item_starts',
+                        name: 'Chain Reaction (End to Start)',
+                        category: 'Medium',
+                        description: 'Item must start with the LAST letter of the Destination name (e.g. New YorK -> Kangaroo).',
+                        hint1: 'Look at the tail end of the destination word.',
+                        hint2: 'The last letter of the place becomes the first letter of your item.',
+                        check: (item, dest) => {
+                            const d = dest.trim().replace(/[^a-z]/gi, '').toLowerCase();
+                            const i = item.trim().replace(/[^a-z]/gi, '').toLowerCase();
+                            return d.length > 0 && i.length > 0 && d.slice(-1) === i[0];
+                        },
+                        examples: [
+                            { destination: 'New York', item: 'Kangaroo' },
+                            { destination: 'Miami', item: 'Ice Cream' }
+                        ]
+                    },
+                    {
+                        id: 'starts_and_ends_same',
+                        name: 'Bookends (Starts & Ends Same Letter)',
+                        category: 'Medium',
+                        description: 'Item name must start and end with the exact same letter (e.g. Toast, Radar, Eagle, Tent).',
+                        hint1: 'The beginning letter of your item must match its ending letter.',
+                        hint2: 'First letter equals last letter of the item name.',
+                        check: (item) => {
+                            const i = item.trim().replace(/[^a-z]/gi, '').toLowerCase();
+                            return i.length > 1 && i[0] === i.slice(-1);
+                        },
+                        examples: [
+                            { destination: 'Cabin', item: 'Toast' },
+                            { destination: 'Forest', item: 'Eagle' }
+                        ]
+                    },
+                    {
+                        id: 'no_letter_e',
+                        name: 'Lipogram (Forbidden Letter E)',
+                        category: 'Medium',
+                        description: 'Items must NEVER contain the letter "E".',
+                        hint1: 'One of the most common vowels in English is strictly banned!',
+                        hint2: 'Do not use the letter E anywhere in your item.',
+                        check: (item) => !item.toLowerCase().includes('e'),
+                        examples: [
+                            { destination: 'Park', item: 'Tacos' },
+                            { destination: 'Pool', item: 'Swimsuit' }
+                        ]
+                    },
+                    {
+                        id: 'odd_length_words',
+                        name: 'Odd Letter Count',
+                        category: 'Easy',
+                        description: 'The number of letters in the item must be an ODD number (3, 5, 7, 9... letters).',
+                        hint1: 'Count the number of letters in your item.',
+                        hint2: 'Only items with an odd letter count are allowed.',
+                        check: (item) => item.trim().replace(/[^a-z]/gi, '').length % 2 !== 0,
+                        examples: [
+                            { destination: 'Camp', item: 'Cat' }, // 3
+                            { destination: 'Hotel', item: 'Water' } // 5
+                        ]
+                    },
+                    {
+                        id: 'starts_with_vowel',
+                        name: 'Vowel VIP',
+                        category: 'Easy',
+                        description: 'Item name must start with a vowel (A, E, I, O, U).',
+                        hint1: 'Look at the very first letter of your item.',
+                        hint2: 'Must start with A, E, I, O, or U.',
+                        check: (item) => /^[aeiou]/i.test(item.trim()),
+                        examples: [
+                            { destination: 'Island', item: 'Avocado' },
+                            { destination: 'Resort', item: 'Umbrella' }
+                        ]
+                    },
+                    {
+                        id: 'contains_double_vowels',
+                        name: 'Twin Vowels',
+                        category: 'Medium',
+                        description: 'Item must contain side-by-side double vowels (e.g. Tea, Boat, Fruit, Moon).',
+                        hint1: 'Look for two vowels touching each other.',
+                        hint2: 'Contains pairs like ea, oo, ou, ai, ui, oa.',
+                        check: (item) => /(aa|ee|oo|ea|ai|ou|oa|ui|ie|au|ei)/i.test(item),
+                        examples: [
+                            { destination: 'Cruise', item: 'Fruit' },
+                            { destination: 'Camp', item: 'Boots' }
+                        ]
+                    },
+                    {
+                        id: 'same_length_as_dest',
+                        name: 'Symmetric Length',
+                        category: 'Mind-Bender',
+                        description: 'The letter count of the item must EXACTLY match the letter count of the Destination!',
+                        hint1: 'Compare the length of the destination name with the item length.',
+                        hint2: 'Destination letter count must equal Item letter count.',
+                        check: (item, dest) => {
+                            const dLen = dest.trim().replace(/[^a-z]/gi, '').length;
+                            const iLen = item.trim().replace(/[^a-z]/gi, '').length;
+                            return dLen > 0 && dLen === iLen;
+                        },
+                        examples: [
+                            { destination: 'Rome', item: 'Book' }, // 4 & 4
+                            { destination: 'Beach', item: 'Towel' } // 5 & 5
+                        ]
+                    },
+                    {
+                        id: 'three_or_more_vowels',
+                        name: 'Vowel Heavy',
+                        category: 'Mind-Bender',
+                        description: 'Item must contain at least 3 or more vowels in total.',
+                        hint1: 'Items must be packed with vowels!',
+                        hint2: 'Count vowels (a, e, i, o, u). You need 3 or more.',
+                        check: (item) => (item.match(/[aeiou]/gi) || []).length >= 3,
+                        examples: [
+                            { destination: 'Picnic', item: 'Pineapple' },
+                            { destination: 'Safari', item: 'Suitcase' }
+                        ]
+                    }
+                ];
+
+                // --- AUDIO SYSTEM (Web Audio API Synthesizer) ---
+                const playSound = (type) => {
+                    if (muted.value) return;
+                    try {
+                        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+
+                        const now = ctx.currentTime;
+                        if (type === 'approve') {
+                            // Happy Arpeggio
+                            osc.type = 'sine';
+                            osc.frequency.setValueAtTime(523.25, now); // C5
+                            osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.1); // E5
+                            osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.2); // G5
+                            gain.gain.setValueAtTime(0.15, now);
+                            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+                            osc.start(now);
+                            osc.stop(now + 0.35);
+                        } else if (type === 'reject') {
+                            // Low Thump Error
+                            osc.type = 'sawtooth';
+                            osc.frequency.setValueAtTime(160, now);
+                            osc.frequency.exponentialRampToValueAtTime(80, now + 0.2);
+                            gain.gain.setValueAtTime(0.2, now);
+                            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                            osc.start(now);
+                            osc.stop(now + 0.25);
+                        } else if (type === 'win') {
+                            // Fanfare
+                            osc.type = 'triangle';
+                            osc.frequency.setValueAtTime(523.25, now);
+                            osc.frequency.setValueAtTime(659.25, now + 0.1);
+                            osc.frequency.setValueAtTime(783.99, now + 0.2);
+                            osc.frequency.setValueAtTime(1046.50, now + 0.3);
+                            gain.gain.setValueAtTime(0.2, now);
+                            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+                            osc.start(now);
+                            osc.stop(now + 0.6);
+                        }
+                    } catch(e) {
+                        console.warn('Audio API issue:', e);
+                    }
+                };
+
+                const toggleMute = () => {
+                    muted.value = !muted.value;
+                };
+
+                // --- VOICE FEEDBACK ---
+                const speakVerdict = (approved) => {
+                    if (muted.value) return;
+                    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+                    try {
+                        window.speechSynthesis.cancel();
+                        const phrase = approved ? 'Yes you can bring that' : 'Sorr you cannot bring that';
+                        const utterance = new SpeechSynthesisUtterance(phrase);
+                        utterance.rate = 0.95;
+                        utterance.pitch = approved ? 1.05 : 0.9;
+                        window.speechSynthesis.speak(utterance);
+                    } catch (e) { /* speech is optional */ }
+                };
+
+                // --- SOLO MODE STATE ---
+                const currentSoloRule = ref(RULE_BANK[0]);
+                const soloDestination = ref('Beach');
+                const inputDestination = ref('Beach');
+                const inputItem = ref('');
+                const soloHistory = ref([]);
+                const hintsGiven = ref(0);
+                const itemInputRef = ref(null);
+
+                const newSoloGame = () => {
+                    const idx = Math.floor(Math.random() * RULE_BANK.length);
+                    currentSoloRule.value = RULE_BANK[idx];
+                    soloHistory.value = [];
+                    hintsGiven.value = 0;
+                    
+                    // Pick initial starter example
+                    const starter = currentSoloRule.value.examples[0];
+                    soloDestination.value = starter.destination;
+                    inputDestination.value = starter.destination;
+                    inputItem.value = '';
+
+                    // Automatically add starter example to approved history
+                    soloHistory.value.push({
+                        id: Date.now(),
+                        destination: starter.destination,
+                        item: starter.item,
+                        approved: true
+                    });
+                };
+
+                const submitSoloAttempt = () => {
+                    if (!inputItem.value.trim() || !inputDestination.value.trim()) return;
+
+                    const dest = inputDestination.value.trim();
+                    const item = inputItem.value.trim();
+
+                    // Update global solo destination
+                    soloDestination.value = dest;
+
+                    // Evaluate rule
+                    const isPassed = currentSoloRule.value.check(item, dest);
+
+                    soloHistory.value.unshift({
+                        id: Date.now(),
+                        destination: dest,
+                        item: item,
+                        approved: isPassed
+                    });
+
+                    if (isPassed) {
+                        playSound('approve');
+                    } else {
+                        playSound('reject');
+                    }
+                    speakVerdict(isPassed);
+
+                    inputItem.value = '';
+                    if (itemInputRef.value) {
+                        itemInputRef.value.focus();
+                    }
+                };
+
+                const approvedList = computed(() => soloHistory.value.filter(h => h.approved));
+                const rejectedList = computed(() => soloHistory.value.filter(h => !h.approved));
+                const approvedCount = computed(() => approvedList.value.length);
+                const rejectedCount = computed(() => rejectedList.value.length);
+
+                const currentStreak = computed(() => {
+                    let streak = 0;
+                    for (let entry of soloHistory.value) {
+                        if (entry.approved) streak++;
+                        else break;
+                    }
+                    return Math.max(0, streak - hintsGiven.value);
+                });
+
+                // Hints Logic
+                const activeHints = computed(() => {
+                    const hints = [];
+                    if (hintsGiven.value >= 1) hints.push(currentSoloRule.value.hint1);
+                    if (hintsGiven.value >= 2) hints.push(currentSoloRule.value.hint2);
+                    return hints;
+                });
+
+                const hintButtonText = computed(() => {
+                    if (hintsGiven.value === 0) return 'Request Hint 1 (−1 streak)';
+                    if (hintsGiven.value === 1) return 'Request Hint 2 (−1 streak)';
+                    return 'All Hints Revealed';
+                });
+
+                const requestHint = () => {
+                    if (hintsGiven.value < 2) {
+                        hintsGiven.value++;
+                    }
+                };
+
+                // Solve Modal Options
+                const ruleGuessOptions = computed(() => {
+                    return RULE_BANK.map(r => ({ id: r.id, name: r.name }));
+                });
+
+                const checkRuleGuess = (ruleId) => {
+                    if (ruleId === currentSoloRule.value.id) {
+                        showGuessModal.value = false;
+                        showWinModal.value = true;
+                        playSound('win');
+                    } else {
+                        playSound('reject');
+                        alert("Not quite! That's not the secret rule. Keep testing items!");
+                    }
+                };
+
+                const surrenderAndReveal = () => {
+                    showGuessModal.value = false;
+                    alert(`The Secret Rule was: "${currentSoloRule.value.name}"\n\n${currentSoloRule.value.description}`);
+                    newSoloGame();
+                };
+
+                // --- PARTY HOST MODE STATE ---
+                const hostDifficulty = ref('Easy');
+                const currentHostRule = ref(RULE_BANK[0]);
+                const hostRuleRevealed = ref(false);
+                const partyPlayers = ref([
+                    { id: 1, name: 'Alex', solved: false, approved: 0, denied: 0 },
+                    { id: 2, name: 'Jordan', solved: false, approved: 0, denied: 0 }
+                ]);
+                const newPlayerName = ref('');
+
+                const hostInputPlayerId = ref('');
+                const hostInputDestination = ref('Beach');
+                const hostInputItem = ref('');
+                const partyFeed = ref([]);
+
+                const customRuleName = ref('');
+                const customRuleDesc = ref('');
+
+                const generateHostRule = () => {
+                    const filtered = RULE_BANK.filter(r => r.category === hostDifficulty.value);
+                    const pool = filtered.length > 0 ? filtered : RULE_BANK;
+                    const idx = Math.floor(Math.random() * pool.length);
+                    currentHostRule.value = pool[idx];
+                    hostRuleRevealed.value = false;
+                };
+
+                const saveCustomRule = () => {
+                    currentHostRule.value = {
+                        id: 'custom_' + Date.now(),
+                        name: customRuleName.value,
+                        category: 'Custom',
+                        description: customRuleDesc.value,
+                        hostJudged: true,
+                        examples: [{ destination: 'Picnic', item: 'Surprise' }]
+                    };
+                    showCustomRuleModal.value = false;
+                    hostRuleRevealed.value = true;
+                    customRuleName.value = '';
+                    customRuleDesc.value = '';
+                };
+
+                const addPlayer = () => {
+                    if (!newPlayerName.value.trim()) return;
+                    partyPlayers.value.push({
+                        id: Date.now(),
+                        name: newPlayerName.value.trim(),
+                        solved: false,
+                        approved: 0,
+                        denied: 0
+                    });
+                    newPlayerName.value = '';
+                };
+
+                const removePlayer = (idx) => {
+                    partyPlayers.value.splice(idx, 1);
+                };
+
+                const togglePlayerSolved = (idx) => {
+                    partyPlayers.value[idx].solved = !partyPlayers.value[idx].solved;
+                    if (partyPlayers.value[idx].solved) {
+                        playSound('win');
+                    }
+                };
+
+                const hostAutoEvaluate = () => {
+                    if (!currentHostRule.value.check) return; // custom rules are host-judged
+                    if (!hostInputItem.value.trim() || !hostInputDestination.value.trim()) return;
+                    const isAllowed = currentHostRule.value.check(hostInputItem.value, hostInputDestination.value);
+                    hostManualDecision(isAllowed);
+                };
+
+                const hostManualDecision = (allowed) => {
+                    const player = partyPlayers.value.find(p => p.id === hostInputPlayerId.value);
+                    const pName = player ? player.name : 'Guest';
+
+                    if (player) {
+                        if (allowed) player.approved++;
+                        else player.denied++;
+                    }
+
+                    partyFeed.value.unshift({
+                        id: Date.now(),
+                        playerName: pName,
+                        destination: hostInputDestination.value || 'Picnic',
+                        item: hostInputItem.value,
+                        allowed: allowed,
+                        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                    });
+
+                    if (allowed) playSound('approve');
+                    else playSound('reject');
+                    speakVerdict(allowed);
+
+                    hostInputItem.value = '';
+                };
+
+                const setMode = (newMode) => {
+                    mode.value = newMode;
+                };
+
+                onMounted(() => {
+                    newSoloGame();
+                    generateHostRule();
+                });
+
+                return {
+                    mode,
+                    setMode,
+                    muted,
+                    toggleMute,
+                    showRulesModal,
+                    showGuessModal,
+                    showWinModal,
+                    showCustomRuleModal,
+                    
+                    // Solo
+                    currentSoloRule,
+                    soloDestination,
+                    inputDestination,
+                    inputItem,
+                    soloHistory,
+                    approvedList,
+                    rejectedList,
+                    approvedCount,
+                    rejectedCount,
+                    currentStreak,
+                    hintsGiven,
+                    activeHints,
+                    hintButtonText,
+                    itemInputRef,
+                    ruleGuessOptions,
+                    newSoloGame,
+                    submitSoloAttempt,
+                    requestHint,
+                    checkRuleGuess,
+                    surrenderAndReveal,
+
+                    // Host
+                    hostDifficulty,
+                    currentHostRule,
+                    hostRuleRevealed,
+                    partyPlayers,
+                    newPlayerName,
+                    hostInputPlayerId,
+                    hostInputDestination,
+                    hostInputItem,
+                    partyFeed,
+                    customRuleName,
+                    customRuleDesc,
+                    generateHostRule,
+                    saveCustomRule,
+                    addPlayer,
+                    removePlayer,
+                    togglePlayerSolved,
+                    hostAutoEvaluate,
+                    hostManualDecision
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

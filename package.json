@@ -1,0 +1,8 @@
+{
+  "scripts": {
+    "test": "node --test test/game.test.js"
+  },
+  "dependencies": {
+    "firebase": "^13.4.0"
+  }
+}
