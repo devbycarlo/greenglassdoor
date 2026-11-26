@@ -29,9 +29,11 @@ A robot bouncer picks a secret rule and judges everything you bring.
 - Test as many items as you like — every attempt is logged in the **Approved Manifest** and **Rejected at the Gate**
 - Watch your **🔥 streak** grow with each correct guess
 - Ask for **two progressive hints** when you're stuck — each hint costs 1 🔥 streak point
-- Pick from 10 rule names in the "Crack the Secret Rule" panel — or surrender and reveal the answer
+- Type your answer in your own words in the "Crack the Secret Rule" panel — or surrender and reveal the answer
 - New rule and destination every game (the rule may repeat)
-- Hears a spoken verdict on every item: "Yes you can bring that" or "Sorr you cannot bring that" (respects the 🔊 toggle)
+- See an APPROVED / REJECTED verdict right under the input after every attempt
+- Sound is off by default; toggle 🔊 to hear "Yes you can bring that" or "Sorry, you cannot bring that" spoken aloud
+- Your starter clue is labelled in the Approved Manifest, and "New Secret Rule" asks before wiping your progress
 
 ### 🎉 Party Host — "Pass & Play"
 You're the game master. Keep the screen away from the players!

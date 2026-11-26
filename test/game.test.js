@@ -17,7 +17,7 @@ function boot() {
   const state = {};
   const ctx = vm.createContext({
     console, setTimeout, clearTimeout, Date, Math, JSON,
-    alert: () => {},
+    alert: (message) => { ctx.__alerts.push(message); },
     Vue: {
       createApp: (opts) => ({ mount() { Object.assign(state, opts.setup()); } }),
       ref: (value) => ({ value }),
@@ -27,6 +27,7 @@ function boot() {
   });
   ctx.window = ctx;
   ctx.__spoken = [];
+  ctx.__alerts = [];
   ctx.speechSynthesis = { cancel() {}, speak(u) { ctx.__spoken.push(u.text); } };
   ctx.SpeechSynthesisUtterance = class { constructor(text) { this.text = text; } };
   ctx.AudioContext = class {
@@ -111,6 +112,7 @@ test('custom rules are host-judged; generated rules can auto-evaluate', () => {
 
 test('solo item verdicts speak the exact phrases', () => {
   const { state, ctx } = boot();
+  state.muted.value = false;
   state.currentSoloRule.value = {
     id: 'no_e', name: 'No E', description: '', hint1: 'h1', hint2: 'h2',
     check: (item) => !/e/i.test(item),
@@ -120,15 +122,107 @@ test('solo item verdicts speak the exact phrases', () => {
   assert.deepEqual(ctx.__spoken, ['Yes you can bring that']);
   state.inputItem.value = 'Egg';
   state.submitSoloAttempt();
-  assert.deepEqual(ctx.__spoken, ['Yes you can bring that', 'Sorr you cannot bring that']);
+  assert.deepEqual(ctx.__spoken, ['Yes you can bring that', 'Sorry, you cannot bring that']);
+});
+
+test('a typed rule guess matches the secret rule despite case and punctuation', () => {
+  const { state } = boot();
+  state.currentSoloRule.value = {
+    id: 'no_e', name: 'Lipogram (Forbidden Letter E)', description: '', hint1: '', hint2: '',
+    check: () => true
+  };
+  state.showGuessModal.value = true;
+  state.guessInput.value = '  lipogram, forbidden letter E! ';
+  state.checkRuleGuess();
+  assert.equal(state.showGuessModal.value, false);
+  assert.equal(state.showWinModal.value, true);
+});
+
+test('a wrong typed guess stays open with an inline error and no alert', () => {
+  const { state, ctx } = boot();
+  state.currentSoloRule.value = {
+    id: 'double', name: 'Double Letters', description: '', hint1: '', hint2: '',
+    check: () => true
+  };
+  state.showGuessModal.value = true;
+  state.guessInput.value = 'Lipogram';
+  state.checkRuleGuess();
+  assert.equal(state.showGuessModal.value, true);
+  assert.equal(state.showWinModal.value, false);
+  assert.match(state.guessError.value, /not quite/i);
+  assert.equal(ctx.__alerts.length, 0, 'no blocking browser alert');
+});
+
+test('new rule asks for confirmation before wiping progress, and the starter clue is labelled', () => {
+  const { state } = boot();
+  state.newSoloGame();
+  const starter = state.soloHistory.value[0];
+  assert.equal(starter.starter, true, 'starter entry is marked as a clue');
+
+  state.soloHistory.value.push({ id: 99, item: 'Tacos', destination: 'Park', allowed: true });
+  state.confirmReset();
+  assert.equal(state.showResetModal.value, true);
+  assert.equal(state.soloHistory.value.length, 2, 'confirming does not reset immediately');
+
+  state.cancelReset();
+  assert.equal(state.showResetModal.value, false);
+  assert.equal(state.soloHistory.value.length, 2, 'cancelling keeps progress');
+
+  state.confirmReset();
+  state.performReset();
+  assert.equal(state.showResetModal.value, false);
+  assert.equal(state.soloHistory.value.length, 1, 'new game keeps only the starter clue');
+  assert.equal(state.soloHistory.value[0].starter, true);
+});
+
+test('surrendering reveals the rule in a panel without an alert or instant restart', () => {
+  const { state, ctx } = boot();
+  const rule = { id: 'no_e', name: 'No E', description: 'No letter E', hint1: '', hint2: '', check: () => true };
+  state.currentSoloRule.value = rule;
+  state.soloHistory.value = [{ id: 1, item: 'Tacos', destination: 'Park', allowed: true }];
+  state.surrenderAndReveal();
+  assert.equal(state.showGuessModal.value, false);
+  assert.equal(state.showRevealModal.value, true);
+  assert.equal(state.revealedRule.value, rule);
+  assert.equal(state.soloHistory.value.length, 1, 'progress survives until the player starts a new rule');
+  assert.equal(ctx.__alerts.length, 0, 'no blocking browser alert');
+
+  state.revealNextRule();
+  assert.equal(state.showRevealModal.value, false);
+  assert.equal(state.soloHistory.value.length, 1, 'new game contains only the starter clue');
+});
+
+test('solo submissions record a verdict the player can read', () => {
+  const { state } = boot();
+  state.currentSoloRule.value = {
+    id: 'fake', name: 'Fake', description: '', hint1: 'h1', hint2: 'h2',
+    check: (item) => item === 'Tacos'
+  };
+  state.inputDestination.value = 'Park';
+  state.inputItem.value = 'Tacos';
+  state.submitSoloAttempt();
+  assert.equal(state.lastVerdict.value.approved, true);
+  assert.equal(state.lastVerdict.value.item, 'Tacos');
+  assert.equal(state.lastVerdict.value.destination, 'Park');
+  state.inputItem.value = 'Bananas';
+  state.submitSoloAttempt();
+  assert.equal(state.lastVerdict.value.approved, false);
+  assert.equal(state.lastVerdict.value.item, 'Bananas');
+});
+
+test('the verdict is announced in a live region near the input', () => {
+  assert.match(html, /aria-live="polite"/);
+  assert.match(html, /v-if="lastVerdict"/);
 });
 
 test('party host decisions speak the verdicts and respect mute', () => {
   const { state, ctx } = boot();
+  assert.equal(state.muted.value, true, 'sound is opt-in by default');
+  state.muted.value = false;
   state.partyPlayers.value = [{ id: 1, name: 'Alex', color: '#fff' }];
   state.hostManualDecision(true);
   state.hostManualDecision(false);
-  assert.deepEqual(ctx.__spoken, ['Yes you can bring that', 'Sorr you cannot bring that']);
+  assert.deepEqual(ctx.__spoken, ['Yes you can bring that', 'Sorry, you cannot bring that']);
   state.muted.value = true;
   state.hostManualDecision(true);
   assert.equal(ctx.__spoken.length, 2, 'muted: no speech');
